@@ -2,7 +2,7 @@
   "name": "dsh-model-gateway",
   "version": "0.2.1",
   "private": true,
-  "description": "把 DeepSeek Harness 已接入的模型（WorkBuddy / Qoder）开放成本地 OpenAI 兼容 HTTP 接口，供 Postman、Cherry Studio、LangChain 等直接调用。",
+  "description": "把 DeepSeek Harness 已接入的模型（WorkBuddy / Qoder）开放成本地 OpenAI 兼容接口，Postman / SDK 直接调用",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -18,7 +18,9 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "docs/*.png"
   ],
   "keywords": [
     "deepseek-harness",
