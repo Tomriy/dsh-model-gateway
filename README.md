@@ -204,6 +204,69 @@ deepseek-v4.1-flash             ← 裸名：仅当该模型只属于一家厂�
 | 上游中途失败 | 已有产出则补发一帧 `{error}` 再 `[DONE]`；无产出则返回标准错误信封 |
 | `top_p` 等采样参数 | DSH 暂无对应字段，收到后忽略（不假装支持） |
 
+## 工具调用（Function Calling）
+
+支持标准的 OpenAI 工具调用协议：`tools` 定义透传，模型决策以标准 `tool_calls` 格式回传，`finish_reason` 正确映射为 `tool_calls`。
+
+**第一轮：带 tools 定义，模型决定调用工具**
+
+```bash
+curl http://127.0.0.1:8787/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "qoder/Efficient",
+    "messages": [{"role": "user", "content": "北京天气怎么样？用 get_weather 查"}],
+    "tools": [{
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "查询城市天气",
+        "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}
+      }
+    }]
+  }'
+```
+
+```json
+{
+  "choices": [{
+    "message": {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [{"id": "call_4329...", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"北京\"}"}}]
+    },
+    "finish_reason": "tool_calls"
+  }]
+}
+```
+
+**第二轮：执行工具后回传结果**（`role: "assistant"` 带 `tool_calls`，`role: "tool"` 带结果）：
+
+```json
+{
+  "model": "qoder/Efficient",
+  "messages": [
+    {"role": "user", "content": "北京天气怎么样？"},
+    {"role": "assistant", "content": "", "tool_calls": [{"id": "call_4329", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"北京\"}"}}]},
+    {"role": "tool", "tool_call_id": "call_4329", "content": "{\"temp_c\": 12, \"condition\": \"晴\"}"}
+  ],
+  "tools": ["...同上..."]
+}
+```
+
+### 工具历史兼容模式（重要）
+
+实测发现：**部分上游网关对 OpenAI 工具历史回放（`tool_calls` + `tool` 消息）支持不完整**——第二轮的 `role: "tool"` 结果可能被上游丢弃，模型看到的是"工具没有返回结果"。各家上游表现不一（同一厂商不同模型也不一致：有的静默吞掉，有的直接报 502）。
+
+为此提供 `compatTools` 配置：
+
+| 值 | 行为 | 适用 |
+| --- | --- | --- |
+| `native`（默认） | 标准 OpenAI 工具历史透传 | 上游完整支持工具回放时，语义最准 |
+| `text` | 工具调用与结果**折叠成纯文本对话**（`[调用工具 get_weather，参数 {...}]` / `[工具 xxx 返回结果]: ...`） | 上游吞工具结果时的 100% 兼容兜底 |
+
+两种模式都通过 `POST /api/dsh-model-gateway/configure` 或设置页配置文件热切换，无需重启。若你的 agent 框架第二轮拿不到工具结果，切到 `text` 即可。
+
 ## 安全边界
 
 - 默认只监听 `127.0.0.1`，**不暴露局域网与公网**
@@ -258,5 +321,4 @@ curl http://127.0.0.1:8787/v1/chat/completions \
 
 ## 已知限制
 
-- **工具调用**：`tools` 定义透传、`tool_calls` 按标准格式回传，但多轮工具编排未完整验证
 - 依赖 DSH 的模型适配器能力，`temperature` / `max_tokens` / `stop` 之外的控制参数以 DSH 实际支持为准
