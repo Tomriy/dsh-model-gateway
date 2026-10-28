@@ -37,7 +37,7 @@ WorkBuddy 和 Qoder 都不是标准的 OpenAI 接口：前者有自有鉴权头�
 ## 安装
 
 ```bash
-git clone https://github.com/<you>/dsh-model-gateway.git
+git clone https://github.com/Tomriy/dsh-model-gateway.git
 ```
 
 然后把 `dsh-model-gateway` 目录作为本地插件包安装进 DSH 的 profile（DSH 插件管理器的「本地安装」入口，指向该目录即可）。安装成功后重启 DSH，设置面板会出现 **「模型网关」** 页。
