@@ -211,8 +211,52 @@ deepseek-v4.1-flash             ← 裸名：仅当该模型只属于一家厂�
 - 客户端断开时立刻取消上游请求，不白烧额度
 - 本插件绝不主动刷新上游 token（刷新会轮换 refreshToken，把你正在用的登录态顶下线）
 
+## 图片输入
+
+模型是否支持图片由 DSH 的模型目录决定（同一厂商的不同模型也可能不同）。网关按此分流：
+
+**不支持图片的模型** —— 明确 400 并指名模型，绝不静默丢图：
+
+```json
+{
+  "error": {
+    "message": "model \"workbuddy/glm-5.3\" does not support image input. Pick an image-capable model (see GET /v1/models), or send text only.",
+    "code": "model_does_not_support_image"
+  }
+}
+```
+
+**支持图片的模型** —— 标准 OpenAI 多模态格式直接可用（base64 data URL）：
+
+```bash
+curl http://127.0.0.1:8787/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "qoder/Efficient",
+    "messages": [{
+      "role": "user",
+      "content": [
+        {"type": "text", "text": "这张图是什么颜色？一个词回答"},
+        {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgo..."}}
+      ]
+    }],
+    "stream": false
+  }'
+```
+
+```json
+{"choices": [{"message": {"role": "assistant", "content": "红色"}}], "usage": {"prompt_tokens": 399, "completion_tokens": 55, "total_tokens": 454}}
+```
+
+图片以 base64 data URL 传入（`image/png` / `image/jpeg` / `image/webp` / `image/gif`），由 DSH 的附件服务校验、归一化后进入模型请求。`http(s)://` 外链图片不支持（避免网关代拉任意 URL 的 SSRF 面），会返回明确错误。
+
+哪些模型支持图片：`GET /v1/models` 响应里带 `"image_input": true` 标记的就是。
+
+## 端口被占用怎么办
+
+配置的端口被其他进程占用时，网关**自动回退到系统分配的空闲端口**，不会拒绝启动。设置页顶部会红字提示实际端口；也可以在设置页换一个端口重新保存。
+
 ## 已知限制
 
-- **图片输入**：返回 `400 unsupported_content`，明确报错而非静默丢内容
 - **工具调用**：`tools` 定义透传、`tool_calls` 按标准格式回传，但多轮工具编排未完整验证
 - 依赖 DSH 的模型适配器能力，`temperature` / `max_tokens` / `stop` 之外的控制参数以 DSH 实际支持为准

@@ -1,6 +1,6 @@
 {
   "name": "dsh-model-gateway",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "private": true,
   "description": "把 DeepSeek Harness 已接入的模型（WorkBuddy / Qoder）开放成本地 OpenAI 兼容接口，Postman / SDK 直接调用",
   "type": "module",
