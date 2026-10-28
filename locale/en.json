@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Model Gateway",
+    "description": "Expose the models this Harness already has (WorkBuddy, Qoder) as a local OpenAI-compatible HTTP API for Postman, SDKs and other tools."
+  }
+}

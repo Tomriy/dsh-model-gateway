@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "模型网关",
+    "description": "把本 Harness 已接入的模型（WorkBuddy、Qoder）开放成本地 OpenAI 兼容 HTTP 接口，Postman、SDK 等工具可直接调用。"
+  }
+}

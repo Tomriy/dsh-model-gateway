@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Model Gateway">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f6feb"/>
+      <stop offset="1" stop-color="#0b3d91"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="14" fill="url(#bg)"/>
+  <!-- 左：客户端 -->
+  <rect x="12" y="24" width="11" height="16" rx="3" fill="#ffffff" opacity="0.95"/>
+  <!-- 右：模型提供方 -->
+  <rect x="41" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.95"/>
+  <rect x="41" y="35" width="11" height="11" rx="3" fill="#ffffff" opacity="0.65"/>
+  <!-- 中间：网关转发 -->
+  <circle cx="32" cy="32" r="6.5" fill="#ffffff"/>
+  <path d="M23 32h2.8M38.2 32H41M32 24.6v1.6M32 37.8v1.6" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M41 24.5 36.5 28M41 41l-4.5-3.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
+</svg>

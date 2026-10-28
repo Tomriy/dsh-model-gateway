@@ -1,0 +1,35 @@
+# dsh-model-gateway
+#
+# 把 DeepSeek Harness 已经注册进 ctx.llm 的模型适配器
+# （workbuddy / workbuddy-global / qoder / qoder-cn / deepseek-*）
+# 开放成一组本地 OpenAI 兼容 HTTP 路由。
+#
+# 本插件启动一个**自己的** HTTP 监听器（端口可自定义），
+# 同时把同样的路由挂到 DSH webServer 上作为固定入口。
+# 改端口只重绑本插件的监听器，绝不触碰 DSH 自己的 webserver 端口。
+#
+#   GET  /v1/models                    OpenAI 模型列表
+#   POST /v1/chat/completions          OpenAI 聊天补全（流式 / 非流式）
+#   GET  /v1/gateway/providers         诊断：provider、模型、统计
+#
+# 设置页：设置 → 插件 → 模型网关（含一键复制 base URL、端口编辑、按厂商分组的模型清单）
+- insert:
+    - id: dsh-model-gateway
+      name: dsh-model-gateway
+      config:
+        # 关掉即卸载路由并关闭监听器。
+        enabled: true
+        # 监听地址。保持 127.0.0.1 = 仅本机可访问；改 0.0.0.0 会暴露到局域网。
+        host: 127.0.0.1
+        # 监听端口。0 = 由系统分配空闲端口。
+        port: 8787
+        # 本地调用令牌。留空 = 不校验；填写后请求需带
+        # `Authorization: Bearer <apiKey>`。
+        apiKey: ''
+        # 对外暴露的 provider 白名单。留空 = 自动暴露所有已注册适配器。
+        # 例：['workbuddy', 'qoder']
+        providers: []
+        # 是否允许裸模型名（仅当该模型跨 provider 唯一时生效）。
+        allowBareModelId: true
+        # 单次请求的模型调用超时（毫秒），0 = 不限制。
+        requestTimeoutMs: 300000
