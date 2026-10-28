@@ -33,3 +33,5 @@
         allowBareModelId: true
         # 单次请求的模型调用超时（毫秒），0 = 不限制。
         requestTimeoutMs: 300000
+        # 调试开关：true 时把发给模型的 messages 写进 DSH 日志
+        debug: false
