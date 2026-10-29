@@ -276,6 +276,40 @@ curl http://127.0.0.1:8787/v1/chat/completions \
 
 结论：**做 agent 类应用请直接用 `text` 模式**——它跳过上游不可靠的工具历史回放，把调用过程折叠成模型 100% 能读的文本。
 
+## 客户端兼容性实测
+
+用官方 `openai` Python SDK（v2.48.0）与 LangChain 实测通过的能力：
+
+| 场景 | SDK 写法 | 结果 |
+| --- | --- | --- |
+| 基础对话 | `chat.completions.create(...)` | ✅ content / finish_reason / usage / id 全部标准形状 |
+| 流式 | `stream=True` + `stream_options={"include_usage": True}` | ✅ delta 逐块、usage 帧正确 |
+| 多轮历史 | messages 列表 | ✅ |
+| 图片输入 | `content: [{type:"image_url"}, {type:"text"}]` | ✅（需选支持图片的模型） |
+| 模型列表 | `client.models.list()` | ✅ |
+| 工具调用（Round 1） | `tools=[...]` | ✅ `finish_reason: "tool_calls"`，SDK 自动解析 |
+| 流式工具调用 | `stream=True` + `delta.tool_calls` 拼装 | ✅ |
+| **完整 agent 循环（Round 2）** | `messages.append(m.model_dump())` + `role:"tool"` | ✅ **text 模式**下结果可见；native 模式受上游限制 |
+| LangChain | `ChatOpenAI(base_url=...)` | ✅ |
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://127.0.0.1:8787/v1", api_key="anything")
+
+# 工具调用 agent 循环（建议 compatTools: text）
+tools = [{"type": "function", "function": {"name": "get_weather", "description": "查城市天气",
+    "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}}]
+
+messages = [{"role": "user", "content": "广州天气怎么样？"}]
+resp = client.chat.completions.create(model="qoder/Efficient", messages=messages, tools=tools)
+msg = resp.choices[0].message                      # msg.tool_calls → 执行你的工具
+messages.append(msg.model_dump())                  # SDK 标准回放方式
+messages.append({"role": "tool", "tool_call_id": msg.tool_calls[0].id, "content": "广州晴 24°C"})
+final = client.chat.completions.create(model="qoder/Efficient", messages=messages, tools=tools)
+print(final.choices[0].message.content)
+```
+
 两种模式都通过 `POST /api/dsh-model-gateway/configure` 或设置页配置文件热切换，无需重启。若你的 agent 框架第二轮拿不到工具结果，切到 `text` 即可。
 
 ## 安全边界
